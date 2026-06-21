@@ -21,11 +21,6 @@ dev:
 	@sqlx migrate run
 	@cargo run
 
-## run: start the HTTP server
-.PHONY: run
-run:
-	@cargo run
-
 ## build: build debug binary
 .PHONY: build
 build:
@@ -49,11 +44,6 @@ test:
 # ==================================================================================== #
 # INFRASTRUCTURE
 # ==================================================================================== #
-
-## up: start local infrastructure (postgres, redis, nats, …)
-.PHONY: up
-up:
-	@docker compose up -d
 
 ## down: stop local infrastructure
 .PHONY: down
