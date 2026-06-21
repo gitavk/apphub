@@ -73,7 +73,7 @@ sprint doc; later stages get linked as they're written.
 
 ### Part A — Marketplace core & highload
 
-- [ ] **0. Foundation** — runnable skeleton: service + database + local infra, up with one command — [doc](docs/stages/00-Foundation.md)
+- [x] **0. Foundation** — runnable skeleton: service + database + local infra, up with one command — [doc](docs/stages/00-Foundation.md)
 - [ ] **1. App Catalog** — the first domain: create / list / get applications, cleanly layered — [doc](docs/stages/01-catalog.md)
 - [ ] **2. Performance Baseline** — measure the catalog under load *before* any optimization — [doc](docs/stages/02-Performance.md)
 - [ ] **3. Caching Layer** — cache-aside on the read path; validated before/after vs the baseline — [doc](docs/stages/03-Caching.md)
@@ -122,41 +122,9 @@ for comparability.
 
 ---
 
-## Repo layout
+## Getting started
 
-Starts deliberately small — a single service — and grows only when a stage
-demands it (the split into multiple services is itself a later stage, not a
-day-one decision).
-
-```
-apphub/
-├── src/                # axum app: routes, handlers, state
-├── migrations/         # sqlx migrations
-├── load/               # k6 scenarios + recorded results
-├── docs/
-│   ├── decisions.md    # why I chose X over Y, and the trade-off
-│   └── stages/         # one sprint-style doc per stage
-├── docker-compose.yml  # postgres (+ redis, nats, observability as stages land)
-└── README.md
-```
-
----
-
-## Running locally
-
-```bash
-docker compose up -d        # postgres (and friends as stages are added)
-sqlx migrate run
-cargo run
-```
-
-Load tests:
-
-```bash
-k6 run load/get_apps.js
-```
-
-*(Commands evolve with the stages; this reflects the current state.)*
+See [`docs/development.md`](docs/development.md).
 
 ---
 
