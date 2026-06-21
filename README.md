@@ -60,31 +60,44 @@ The thing I care about most here is **method, not feature count**:
 4. Write down *why* I made the call and what the trade-off was
    (see [`docs/decisions.md`](docs/decisions.md)).
 
-Each highload step is only "done" once there's a measurement behind it.
+Each stage is a self-contained, sprint-style doc under
+[`docs/stages/`](docs/stages/), and a step is only "done" once there's a
+measurement or a clear outcome behind it.
 
 ---
 
 ## Roadmap
 
-Checkboxes reflect actual progress, updated as I go.
+Checkboxes reflect actual progress, updated as I go. Done stages link to their
+sprint doc; later stages get linked as they're written.
 
-### Part A — the marketplace core (read paths, async, observability)
+### Part A — Marketplace core & highload
 
-- [ ] **0. Skeleton** — `axum` + Postgres + Docker Compose; `POST /apps`, `GET /apps`, `GET /apps/:id`
-- [ ] **1. Baseline load test** — `k6` on `GET /apps`, record RPS / latency / CPU
-- [ ] **2. Redis cache-aside** — re-run the test, record before/after
-- [ ] **3. Downloads (sync)** — `POST /downloads` writing straight to Postgres
-- [ ] **4. Observe the coupling** — load it; see how a synchronous write on the hot path ties API latency/availability to the DB *(the lesson is decoupling, not "Postgres can't do N inserts")*
-- [ ] **5. NATS** — API publishes a download event, a worker persists it; API responds immediately
-- [ ] **6. Analytics aggregation** — worker rolls up `daily_downloads`; `GET /stats` avoids heavy `COUNT` (a taste of CQRS)
-- [ ] **7. Metrics** — Prometheus + Grafana, RED metrics (rate / errors / duration)
-- [ ] **8. Tracing** — OpenTelemetry across `Request → axum → sqlx → NATS`
+- [ ] **0. Foundation** — runnable skeleton: service + database + local infra, up with one command — [doc](docs/stages/00-Foundation.md)
+- [ ] **1. App Catalog** — the first domain: create / list / get applications, cleanly layered — [doc](docs/stages/01-catalog.md)
+- [ ] **2. Performance Baseline** — measure the catalog under load *before* any optimization — [doc](docs/stages/02-Performance.md)
+- [ ] **3. Caching Layer** — cache-aside on the read path; validated before/after vs the baseline — [doc](docs/stages/03-Caching.md)
+- [ ] **4. Write-Heavy Load** — stress the write path; find where writes stop scaling (the read/write asymmetry) — [doc](docs/stages/04-WriteHeavyLoad.md)
+- [ ] **5. Async Processing** — move non-critical side effects off the request path via a queue — [doc](docs/stages/05-AsyncProcessing.md)
+- [ ] **6. Data Aggregation** — derived read models updated from events (a taste of CQRS) — [doc](docs/stages/06-DataAggregation.md)
+- [ ] **7. System Observability** — metrics, logs, traces; RED/USE; correlate the async paths — [doc](docs/stages/07-Observability.md)
+- [ ] **8. Scaling & Infrastructure** — horizontal scaling; stateless-vs-stateful asymmetry — [doc](docs/stages/08-ScalingInfrastructure.md)
 
-### Part B — the fintech core (the part the role actually centers on)
+### Part B — Resilience & distributed behavior
 
-- [ ] **9. Purchases** — `POST /purchases` with an `Idempotency-Key`, mocked payment provider, signed webhook handler
-- [ ] **10. Double-entry ledger** — balances derived from immutable entries; tackling **hot-row contention** (why not `UPDATE balance = balance - x`)
-- [ ] **11. Payouts** — saga + transactional **outbox** *(contrast with step 5: for money you can't fire-and-forget — the state change and the event must be atomic)*
+- [ ] **9. Load & Stress Scenarios** — push the whole system to its limit; backpressure, degradation, the "death point" *(planned)*
+- [ ] **10. Reliability & Failure Handling** — break parts on purpose; retries, timeouts, graceful degradation, recovery *(planned)*
+- [ ] **11. Data Consistency & Tradeoffs** — eventual consistency as the norm, idempotency, reconciliation *(planned)*
+
+### Part C — Fintech core (the part the role actually centers on)
+
+- [ ] **12. Purchases & Idempotency** — purchase flow with idempotency keys, signed webhooks, a mocked payment provider *(planned)*
+- [ ] **13. Double-entry Ledger** — balances derived from immutable entries; tackling hot-row contention (why not `UPDATE balance = balance - x`) *(planned)*
+- [ ] **14. Payouts** — saga + transactional **outbox**; reconciliation against the provider *(planned)*
+
+### Capstone
+
+- [ ] **15. Production Readiness** — pull highload *and* money together: deploy strategy, mature monitoring, real-load readiness *(planned)*
 
 ### Later
 
@@ -98,22 +111,22 @@ Checkboxes reflect actual progress, updated as I go.
 The point of the project — recorded as I reach each step, on the same machine
 for comparability.
 
-| Step | Scenario | RPS | p99 latency | Notes |
+| Stage | Scenario | RPS | p99 latency | Notes |
 |------|----------|-----|-------------|-------|
-| 1 | `GET /apps` baseline (Postgres only) | _TBD_ | _TBD_ | first number |
-| 2 | `GET /apps` with Redis cache-aside | _TBD_ | _TBD_ | before/after |
-| 4 | `POST /downloads` sync write | _TBD_ | _TBD_ | hot-path coupling |
-| 5 | `POST /downloads` async via NATS | _TBD_ | _TBD_ | API decoupled |
+| 2 | catalog `GET /apps` baseline (no cache) | _TBD_ | _TBD_ | first number |
+| 3 | catalog read path with cache-aside | _TBD_ | _TBD_ | before/after |
+| 4 | catalog write path under sustained load | _TBD_ | _TBD_ | where writes stop scaling |
+| 5 | side effects moved off the request path | _TBD_ | _TBD_ | API decoupled |
 
-*(Numbers filled in as each step lands.)*
+*(Numbers filled in as each stage lands.)*
 
 ---
 
 ## Repo layout
 
-Starts deliberately small — a single service — and grows only when a step
-demands it (the split into multiple services is itself Stage 10, not a day-one
-decision).
+Starts deliberately small — a single service — and grows only when a stage
+demands it (the split into multiple services is itself a later stage, not a
+day-one decision).
 
 ```
 apphub/
@@ -121,7 +134,8 @@ apphub/
 ├── migrations/         # sqlx migrations
 ├── load/               # k6 scenarios + recorded results
 ├── docs/
-│   └── decisions.md    # why I chose X over Y, and the trade-off
+│   ├── decisions.md    # why I chose X over Y, and the trade-off
+│   └── stages/         # one sprint-style doc per stage
 ├── docker-compose.yml  # postgres (+ redis, nats, observability as stages land)
 └── README.md
 ```
