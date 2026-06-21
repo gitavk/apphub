@@ -12,6 +12,15 @@ help:
 # DEVELOPMENT
 # ==================================================================================== #
 
+## dev: start infra, migrate, and run the server
+.PHONY: dev
+dev:
+	@docker compose up -d
+	@echo 'Waiting for postgres...'
+	@until docker compose exec -T postgres pg_isready -U apphub -d apphub > /dev/null 2>&1; do sleep 1; done
+	@sqlx migrate run
+	@cargo run
+
 ## run: start the HTTP server
 .PHONY: run
 run:
