@@ -11,6 +11,12 @@ pub struct CreateApp {
     pub description: Option<String>,
 }
 
+pub struct UpdateApp {
+    pub name: Option<String>,
+    pub developer: Option<String>,
+    pub description: Option<Option<String>>,
+}
+
 pub struct AppRepository {
     pool: PgPool,
 }
@@ -50,6 +56,28 @@ impl AppRepository {
             .fetch_optional(&self.pool)
             .await
             .map_err(|e| AppError::Internal(e.into()))?;
+
+        Ok(app)
+    }
+
+    pub async fn update(&self, id: Uuid, input: UpdateApp) -> Result<Option<App>, AppError> {
+        let app = sqlx::query_as!(
+            App,
+            "UPDATE apps
+             SET name        = COALESCE($2, name),
+                 developer   = COALESCE($3, developer),
+                 description = COALESCE($4, description),
+                 updated_at  = NOW()
+             WHERE id = $1
+             RETURNING *",
+            id,
+            input.name,
+            input.developer,
+            input.description.unwrap_or(None),
+        )
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| AppError::Internal(e.into()))?;
 
         Ok(app)
     }
