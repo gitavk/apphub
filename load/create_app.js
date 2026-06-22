@@ -16,10 +16,11 @@ export const options = {
   },
 };
 
-let counter = 0;
+// run-scoped prefix ensures IDs are unique across repeated runs
+const RUN_ID = Date.now();
 
 export default function () {
-  const id = `com.load.${__VU}.${__ITER}.${counter++}`;
+  const id = `com.load.${RUN_ID}.${__VU}.${__ITER}`;
   const payload = JSON.stringify({
     bundle_id:   id,
     name:        'Load App',
