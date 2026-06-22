@@ -10,6 +10,7 @@ use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
+    cache::Cache,
     domain::app::App,
     error::AppError,
     repository::app::{AppRepository, CreateApp},
@@ -52,20 +53,38 @@ pub async fn create_app(
 
 pub async fn list_apps(
     State(repo): State<Arc<AppRepository>>,
+    State(cache): State<Arc<Cache>>,
     Query(params): Query<ListParams>,
 ) -> Result<Json<Vec<App>>, AppError> {
     let page = params.page.unwrap_or(1).max(1);
     let per_page = params.per_page.unwrap_or(20).clamp(1, 100);
+    let key = format!("apps:v1:{page}:{per_page}");
+
+    if let Some(apps) = cache.get::<Vec<App>>(&key).await {
+        return Ok(Json(apps));
+    }
+
     let apps = repo.list(page, per_page).await?;
+    cache.set_ex(&key, &apps, 30).await;
     Ok(Json(apps))
 }
 
 pub async fn get_app(
     State(repo): State<Arc<AppRepository>>,
+    State(cache): State<Arc<Cache>>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<App>, AppError> {
+    let key = format!("app:v1:{id}");
+
+    if let Some(app) = cache.get::<App>(&key).await {
+        return Ok(Json(app));
+    }
+
     match repo.find_by_id(id).await? {
-        Some(app) => Ok(Json(app)),
+        Some(app) => {
+            cache.set_ex(&key, &app, 300).await;
+            Ok(Json(app))
+        }
         None => Err(AppError::NotFound),
     }
 }

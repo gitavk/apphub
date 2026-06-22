@@ -1,3 +1,4 @@
+mod cache;
 mod config;
 mod db;
 mod domain;
@@ -19,6 +20,7 @@ use serde_json::{Value, json};
 use sqlx::PgPool;
 use tracing::info;
 
+use cache::Cache;
 use handlers::app::{create_app, get_app, list_apps};
 use repository::app::AppRepository;
 
@@ -26,6 +28,7 @@ use repository::app::AppRepository;
 struct AppState {
     pool: PgPool,
     repo: Arc<AppRepository>,
+    cache: Arc<Cache>,
 }
 
 impl FromRef<AppState> for PgPool {
@@ -37,6 +40,12 @@ impl FromRef<AppState> for PgPool {
 impl FromRef<AppState> for Arc<AppRepository> {
     fn from_ref(state: &AppState) -> Self {
         state.repo.clone()
+    }
+}
+
+impl FromRef<AppState> for Arc<Cache> {
+    fn from_ref(state: &AppState) -> Self {
+        state.cache.clone()
     }
 }
 
@@ -55,8 +64,13 @@ async fn main() -> Result<()> {
     let pool = db::create_pool(&config.database_url).await?;
     info!("database connection pool established");
 
+    let redis_cfg = deadpool_redis::Config::from_url(&config.redis_url);
+    let redis_pool = redis_cfg.create_pool(Some(deadpool_redis::Runtime::Tokio1))?;
+    info!("redis connection pool established");
+
     let state = AppState {
         repo: Arc::new(AppRepository::new(pool.clone())),
+        cache: Arc::new(Cache::new(redis_pool)),
         pool,
     };
 
