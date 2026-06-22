@@ -74,8 +74,8 @@ sprint doc; later stages get linked as they're written.
 ### Part A — Marketplace core & highload
 
 - [x] **0. Foundation** — runnable skeleton: service + database + local infra, up with one command — [doc](docs/stages/00-Foundation.md)
-- [ ] **1. App Catalog** — the first domain: create / list / get applications, cleanly layered — [doc](docs/stages/01-catalog.md)
-- [ ] **2. Performance Baseline** — measure the catalog under load *before* any optimization — [doc](docs/stages/02-Performance.md)
+- [x] **1. App Catalog** — the first domain: create / list / get applications, cleanly layered — [doc](docs/stages/01-catalog.md)
+- [x] **2. Performance Baseline** — measure the catalog under load *before* any optimization — [doc](docs/stages/02-Performance.md) · [results](docs/baseline/02-performance.md)
 - [ ] **3. Caching Layer** — cache-aside on the read path; validated before/after vs the baseline — [doc](docs/stages/03-Caching.md)
 - [ ] **4. Write-Heavy Load** — stress the write path; find where writes stop scaling (the read/write asymmetry) — [doc](docs/stages/04-WriteHeavyLoad.md)
 - [ ] **5. Async Processing** — move non-critical side effects off the request path via a queue — [doc](docs/stages/05-AsyncProcessing.md)
@@ -111,12 +111,14 @@ sprint doc; later stages get linked as they're written.
 The point of the project — recorded as I reach each step, on the same machine
 for comparability.
 
-| Stage | Scenario | RPS | p99 latency | Notes |
-|------|----------|-----|-------------|-------|
-| 2 | catalog `GET /apps` baseline (no cache) | _TBD_ | _TBD_ | first number |
-| 3 | catalog read path with cache-aside | _TBD_ | _TBD_ | before/after |
+| Stage | Scenario | RPS | p95 latency | Notes |
+|-------|----------|-----|-------------|-------|
+| 2 | `GET /apps` list (no cache, 150 VUs) | 1 425 /s | 92 ms | first number |
+| 2 | `GET /apps/:id` get (no cache, 150 VUs) | 1 801 /s | 82 ms | PK lookup, fastest path |
+| 2 | `POST /apps` create (50 VUs) | 612 /s | 132 ms | write tail; pool contention visible |
+| 3 | catalog read path with cache-aside | _TBD_ | _TBD_ | before/after vs stage 2 |
 | 4 | catalog write path under sustained load | _TBD_ | _TBD_ | where writes stop scaling |
-| 5 | side effects moved off the request path | _TBD_ | _TBD_ | API decoupled |
+| 5 | side effects moved off the request path | _TBD_ | _TBD_ | API latency decoupled |
 
 *(Numbers filled in as each stage lands.)*
 
