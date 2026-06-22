@@ -59,6 +59,11 @@ down:
 migrate:
 	@sqlx migrate run
 
+## seed: load sample app data
+.PHONY: seed
+seed:
+	@docker compose exec -T postgres psql -U apphub -d apphub -f /dev/stdin < seed/apps.sql
+
 # ==================================================================================== #
 # LOAD TESTING
 # ==================================================================================== #
