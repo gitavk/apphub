@@ -13,7 +13,7 @@ use crate::{
     cache::Cache,
     domain::app::App,
     error::AppError,
-    repository::app::{AppRepository, CreateApp},
+    repository::app::{AppRepository, CreateApp, UpdateApp},
 };
 
 #[derive(Deserialize, Validate)]
@@ -67,6 +67,39 @@ pub async fn list_apps(
     let apps = repo.list(page, per_page).await?;
     cache.set_ex(&key, &apps, 30).await;
     Ok(Json(apps))
+}
+
+#[derive(Deserialize, Validate)]
+pub struct UpdateAppRequest {
+    #[validate(length(min = 1))]
+    pub name: Option<String>,
+    #[validate(length(min = 1))]
+    pub developer: Option<String>,
+    pub description: Option<Option<String>>,
+}
+
+pub async fn update_app(
+    State(repo): State<Arc<AppRepository>>,
+    State(cache): State<Arc<Cache>>,
+    Path(id): Path<Uuid>,
+    Json(body): Json<UpdateAppRequest>,
+) -> Result<Json<App>, AppError> {
+    body.validate().map_err(AppError::InvalidInput)?;
+
+    let app = repo
+        .update(
+            id,
+            UpdateApp {
+                name: body.name,
+                developer: body.developer,
+                description: body.description,
+            },
+        )
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    cache.del(&format!("app:v1:{id}")).await;
+    Ok(Json(app))
 }
 
 pub async fn get_app(

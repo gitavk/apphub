@@ -83,12 +83,19 @@ load:
 seed-load:
 	@docker compose exec -T postgres psql -U apphub -d apphub -f /dev/stdin < seed/load.sql
 
-## load-baseline: run all three scenarios back-to-back
+## load-baseline: run all three baseline scenarios back-to-back
 .PHONY: load-baseline
 load-baseline:
 	@k6 run load/list_apps.js
 	@k6 run load/get_app.js
 	@k6 run load/create_app.js
+
+## load-write: run write-heavy scenarios (update_apps, write_heavy, mixed)
+.PHONY: load-write
+load-write:
+	@k6 run load/update_apps.js
+	@k6 run load/write_heavy.js
+	@k6 run load/mixed.js
 
 # ==================================================================================== #
 # QUALITY CONTROL
