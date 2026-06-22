@@ -116,7 +116,8 @@ for comparability.
 | 2 | `GET /apps` list (no cache, 150 VUs) | 1 425 /s | 92 ms | first number |
 | 2 | `GET /apps/:id` get (no cache, 150 VUs) | 1 801 /s | 82 ms | PK lookup, fastest path |
 | 2 | `POST /apps` create (50 VUs) | 612 /s | 132 ms | write tail; pool contention visible |
-| 3 | catalog read path with cache-aside | _TBD_ | _TBD_ | before/after vs stage 2 |
+| 3 | `GET /apps/:id` with cache-aside (150 VUs) | 3 691 /s | 41 ms | +105% rps vs stage 2; 100-ID working set fits in cache |
+| 3 | `GET /apps` list with cache-aside (150 VUs) | 2 136 /s | 60 ms | +50% rps; short TTL → stampede tail (max 572 ms) |
 | 4 | catalog write path under sustained load | _TBD_ | _TBD_ | where writes stop scaling |
 | 5 | side effects moved off the request path | _TBD_ | _TBD_ | API latency decoupled |
 
