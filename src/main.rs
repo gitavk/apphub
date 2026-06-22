@@ -21,7 +21,7 @@ use sqlx::PgPool;
 use tracing::info;
 
 use cache::Cache;
-use handlers::app::{create_app, get_app, list_apps};
+use handlers::app::{create_app, get_app, list_apps, update_app};
 use repository::app::AppRepository;
 
 #[derive(Clone)]
@@ -77,7 +77,7 @@ async fn main() -> Result<()> {
     let app = Router::new()
         .route("/health", get(health))
         .route("/apps", post(create_app).get(list_apps))
-        .route("/apps/{id}", get(get_app))
+        .route("/apps/{id}", get(get_app).patch(update_app))
         .with_state(state);
 
     let addr = format!("0.0.0.0:{}", config.port);
