@@ -1,5 +1,8 @@
 mod config;
 mod db;
+mod domain;
+mod error;
+mod repository;
 
 use anyhow::Result;
 use axum::{Json, Router, extract::State, http::StatusCode, routing::get};
