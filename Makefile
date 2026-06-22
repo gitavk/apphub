@@ -68,6 +68,11 @@ seed:
 # LOAD TESTING
 # ==================================================================================== #
 
+## cache-flush: clear all cache keys (dev convenience)
+.PHONY: cache-flush
+cache-flush:
+	@docker compose exec -T valkey valkey-cli FLUSHDB
+
 ## load: run a k6 load scenario  (SCENARIO=list_apps | get_app | create_app)
 .PHONY: load
 load:
