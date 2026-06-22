@@ -2,14 +2,43 @@ mod config;
 mod db;
 mod domain;
 mod error;
+mod handlers;
 mod repository;
 
+use std::sync::Arc;
+
 use anyhow::Result;
-use axum::{Json, Router, extract::State, http::StatusCode, routing::get};
+use axum::{
+    Json, Router,
+    extract::{FromRef, State},
+    http::StatusCode,
+    routing::{get, post},
+};
 use chrono::{DateTime, Utc};
 use serde_json::{Value, json};
 use sqlx::PgPool;
 use tracing::info;
+
+use handlers::app::{create_app, get_app, list_apps};
+use repository::app::AppRepository;
+
+#[derive(Clone)]
+struct AppState {
+    pool: PgPool,
+    repo: Arc<AppRepository>,
+}
+
+impl FromRef<AppState> for PgPool {
+    fn from_ref(state: &AppState) -> Self {
+        state.pool.clone()
+    }
+}
+
+impl FromRef<AppState> for Arc<AppRepository> {
+    fn from_ref(state: &AppState) -> Self {
+        state.repo.clone()
+    }
+}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -26,7 +55,16 @@ async fn main() -> Result<()> {
     let pool = db::create_pool(&config.database_url).await?;
     info!("database connection pool established");
 
-    let app = Router::new().route("/health", get(health)).with_state(pool);
+    let state = AppState {
+        repo: Arc::new(AppRepository::new(pool.clone())),
+        pool,
+    };
+
+    let app = Router::new()
+        .route("/health", get(health))
+        .route("/apps", post(create_app).get(list_apps))
+        .route("/apps/{id}", get(get_app))
+        .with_state(state);
 
     let addr = format!("0.0.0.0:{}", config.port);
     let listener = tokio::net::TcpListener::bind(&addr).await?;

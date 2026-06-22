@@ -34,10 +34,10 @@ impl AppRepository {
         .fetch_one(&self.pool)
         .await
         .map_err(|e| {
-            if let sqlx::Error::Database(ref db_err) = e {
-                if db_err.constraint() == Some("apps_bundle_id_key") {
-                    return AppError::BundleIdConflict;
-                }
+            if let sqlx::Error::Database(ref db_err) = e
+                && db_err.constraint() == Some("apps_bundle_id_key")
+            {
+                return AppError::BundleIdConflict;
             }
             AppError::Internal(e.into())
         })?;
