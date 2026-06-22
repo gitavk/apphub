@@ -77,7 +77,7 @@ sprint doc; later stages get linked as they're written.
 - [x] **1. App Catalog** — the first domain: create / list / get applications, cleanly layered — [doc](docs/stages/01-catalog.md)
 - [x] **2. Performance Baseline** — measure the catalog under load *before* any optimization — [doc](docs/stages/02-Performance.md) · [results](docs/baseline/02-performance.md)
 - [x] **3. Caching Layer** — cache-aside on the read path; validated before/after vs the baseline — [doc](docs/stages/03-Caching.md) · [results](docs/baseline/03-caching.md)
-- [ ] **4. Write-Heavy Load** — stress the write path; find where writes stop scaling (the read/write asymmetry) — [doc](docs/stages/04-WriteHeavyLoad.md)
+- [x] **4. Write-Heavy Load** — stress the write path; find where writes stop scaling (the read/write asymmetry) — [doc](docs/stages/04-WriteHeavyLoad.md) [results](docs/baseline/04-writeheavyload.md)
 - [ ] **5. Async Processing** — move non-critical side effects off the request path via a queue — [doc](docs/stages/05-AsyncProcessing.md)
 - [ ] **6. Data Aggregation** — derived read models updated from events (a taste of CQRS) — [doc](docs/stages/06-DataAggregation.md)
 - [ ] **7. System Observability** — metrics, logs, traces; RED/USE; correlate the async paths — [doc](docs/stages/07-Observability.md)
