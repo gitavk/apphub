@@ -68,10 +68,22 @@ seed:
 # LOAD TESTING
 # ==================================================================================== #
 
-## load: run a k6 load scenario  (SCENARIO=get_apps)
+## load: run a k6 load scenario  (SCENARIO=list_apps | get_app | create_app)
 .PHONY: load
 load:
 	@k6 run load/$(SCENARIO).js
+
+## seed-load: insert 1 000 load-test rows
+.PHONY: seed-load
+seed-load:
+	@docker compose exec -T postgres psql -U apphub -d apphub -f /dev/stdin < seed/load.sql
+
+## load-baseline: run all three scenarios back-to-back
+.PHONY: load-baseline
+load-baseline:
+	@k6 run load/list_apps.js
+	@k6 run load/get_app.js
+	@k6 run load/create_app.js
 
 # ==================================================================================== #
 # QUALITY CONTROL

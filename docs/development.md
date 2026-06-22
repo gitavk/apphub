@@ -5,6 +5,7 @@
 - [Rust](https://rustup.rs) (stable)
 - [Docker](https://docs.docker.com/get-docker/) with Compose plugin
 - [sqlx-cli](https://github.com/launchbadge/sqlx/tree/main/sqlx-cli)
+- [k6](https://k6.io/docs/get-started/installation/) — load testing (required for `make load*` targets)
 
 ```bash
 cargo install sqlx-cli --no-default-features --features native-tls,postgres
@@ -39,6 +40,9 @@ This starts the Postgres container, waits for it to be healthy, applies migratio
 | `make test`    | Run tests                                 |
 | `make ci`      | Full check: fmt + clippy + tests          |
 | `make clean`   | Remove build artifacts                    |
+| `make seed-load` | Insert 1 000 load-test rows into DB     |
+| `make load SCENARIO=<name>` | Run a single k6 scenario   |
+| `make load-baseline` | Run all three scenarios back-to-back |
 
 ## Verify the service is up
 
