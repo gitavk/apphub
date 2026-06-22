@@ -7,6 +7,7 @@ use axum::{
 };
 use serde::Deserialize;
 use uuid::Uuid;
+use validator::Validate;
 
 use crate::{
     domain::app::App,
@@ -14,10 +15,13 @@ use crate::{
     repository::app::{AppRepository, CreateApp},
 };
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Validate)]
 pub struct CreateAppRequest {
+    #[validate(length(min = 1, max = 255))]
     pub bundle_id: String,
+    #[validate(length(min = 1))]
     pub name: String,
+    #[validate(length(min = 1))]
     pub developer: String,
     pub description: Option<String>,
 }
@@ -32,6 +36,8 @@ pub async fn create_app(
     State(repo): State<Arc<AppRepository>>,
     Json(body): Json<CreateAppRequest>,
 ) -> Result<(StatusCode, Json<App>), AppError> {
+    body.validate().map_err(AppError::InvalidInput)?;
+
     let app = repo
         .create(CreateApp {
             bundle_id: body.bundle_id,
